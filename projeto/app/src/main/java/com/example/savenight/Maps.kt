@@ -1,20 +1,40 @@
 package com.example.savenight
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.app.Application
+import android.content.pm.PackageManager
+import android.location.Location
 import androidx.fragment.app.Fragment
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.location.LocationManagerCompat.getCurrentLocation
+import androidx.lifecycle.ViewModelProvider
+import com.example.savenight.databinding.ActivityMainBinding
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.*
 
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 
 class Maps : Fragment() {
+
+    private lateinit var mMap: GoogleMap
+    private lateinit var binding: ActivityMainBinding
+
+    private lateinit var currentLocation: Location
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private val permissionCode = 101
+    private var mapReady = false
+
+
 
     private val callback = OnMapReadyCallback { googleMap ->
         /**
@@ -26,22 +46,91 @@ class Maps : Fragment() {
          * install it inside the SupportMapFragment. This method will only be triggered once the
          * user has installed Google Play services and returned to the app.
          */
-        val sydney = LatLng(-34.0, 151.0)
-        googleMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
-        googleMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
+        mMap = googleMap
+        val latLng= LatLng(currentLocation.latitude, currentLocation.longitude)
+
+        mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng))
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 20f))
+        mMap.isMyLocationEnabled = true
+        mMap.uiSettings.isMyLocationButtonEnabled = true
+
     }
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        super.onCreate(savedInstanceState)
         return inflater.inflate(R.layout.fragment_maps, container, false)
     }
 
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
-        mapFragment?.getMapAsync(callback)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+
+        getCurrentLocationUser()
     }
+
+
+
+
+    @SuppressLint("MissingPermission")
+    private fun getCurrentLocationUser() {
+        if (ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                requireActivity(),
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                permissionCode
+            )
+            return
+        }
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+
+            if (location==null){
+                println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!location is null  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            }
+            if (location != null) {
+
+                currentLocation = location
+                Toast.makeText(
+                    requireContext(),
+                    "${currentLocation.latitude} ${currentLocation.longitude}",
+                    Toast.LENGTH_SHORT
+                ).show()
+                val supportMapFragment =
+                    childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
+                supportMapFragment.getMapAsync(callback)
+
+            }
+
+        }
+
+    }
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            permissionCode -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    getCurrentLocationUser()
+                }
+            }
+        }
+    }
+
+
 }
