@@ -2,6 +2,7 @@ package com.example.savenight
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import com.example.savenight.databinding.ActivityMainBinding
 
@@ -36,7 +37,15 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.group -> {
-                    replaceFragment(Groups())
+                    // see if whe have other fragment in the backstack
+                    val fragment = supportFragmentManager.findFragmentByTag("Lobby")
+                    Log.d("TAG", "onCreate: $fragment")
+                    if (fragment != null) {
+                        //go to that fragment
+                        replaceFragment(fragment)
+                    } else {
+                        replaceFragment(Groups())
+                    }
                     true
                 }
                 else -> false
