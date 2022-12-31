@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "621936639089",
+    "project_id": "savenight-f8bc3",
+    "storage_bucket": "savenight-f8bc3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:621936639089:android:494ffc1805223efb5cafd0",
+        "android_client_info": {
+          "package_name": "com.example.savenight"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "621936639089-7mfsstqi1c8jlohgsa6j6gj4tgh2dm0v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzZ_ExzgRpfRMP2csRyw55OTJmqCzzlzo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "621936639089-7mfsstqi1c8jlohgsa6j6gj4tgh2dm0v.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:621936639089:android:b81d6729c6c89e415cafd0",
+        "android_client_info": {
+          "package_name": "com.projeto.save_night"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "621936639089-7mfsstqi1c8jlohgsa6j6gj4tgh2dm0v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzZ_ExzgRpfRMP2csRyw55OTJmqCzzlzo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "621936639089-7mfsstqi1c8jlohgsa6j6gj4tgh2dm0v.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
