@@ -2,8 +2,10 @@ package com.example.savenight
 
 import android.Manifest
 import android.app.AlertDialog
+import android.content.Context
 import android.content.DialogInterface
 import android.content.pm.PackageManager
+import android.content.res.TypedArray
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.Log
@@ -18,6 +20,7 @@ import androidx.fragment.app.Fragment
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
 import java.io.Serializable
+import java.nio.charset.StandardCharsets
 import java.nio.charset.StandardCharsets.UTF_8
 
 
@@ -41,6 +44,7 @@ class Create: Fragment() {
 
     // List of endpoints connected to us
     private val connectedEndpoints = ArrayList<String>()
+    private var connectedNames =Array<String>(0){""}
     // Dict to save endpoint id and device name
     private val endpointDict = HashMap<String, String>()
 
@@ -56,12 +60,44 @@ class Create: Fragment() {
     private val payloadCallback: PayloadCallback = object : PayloadCallback() {
         override fun onPayloadReceived(endpointId: String, payload: Payload) {
             payload.asBytes()?.let {
-                val receivedMessage = String(it, UTF_8)
-                Toast.makeText(
-                    context,
-                    "Received message: $receivedMessage",
-                    Toast.LENGTH_LONG
-                ).show()
+                val receivedMessage = String(it, StandardCharsets.UTF_8)
+                if (receivedMessage.contains("location")){
+                Log.d("payload", "location received: $receivedMessage")
+                //get location
+                var location = receivedMessage.split("location")[1]
+                //remove , from location
+                val locationList = location.split(",")
+                location=locationList[0]+";"+locationList[1]
+
+                //save location in local storage
+                val sharedPref = requireActivity().getSharedPreferences("locations", Context.MODE_PRIVATE)
+                Log.d("sharedPref", sharedPref.toString())
+                //get endpoint name
+                val name= connectedNames[connectedEndpoints.indexOf(endpointId)]
+                val store= name+ " : " + location
+                with(sharedPref.edit()) {
+                    putString("location", store)
+                    commit()
+                }
+                Log.d("sharedPref", sharedPref.toString())
+
+
+            } else {
+                    Toast.makeText(
+                        context,
+                        "Received message: $receivedMessage",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    //get lobby fragment function
+                    val lobbyFragment =
+                        requireActivity().supportFragmentManager.findFragmentByTag("lobby") as Lobby
+                    Log.d("lobbyFragment", lobbyFragment.toString())
+                    val endpointname = connectedNames[connectedEndpoints.indexOf(endpointId)]
+                    Log.d("endpointname", endpointname)
+                    //add message to list
+                    lobbyFragment.messageReceived(receivedMessage, endpointname)
+
+                }
             }
         }
 
@@ -91,6 +127,7 @@ class Create: Fragment() {
                     Nearby.getConnectionsClient(context!!)
                         .acceptConnection(endpointId, payloadCallback)
                     endpointDict[endpointId] = info.endpointName
+
                 }
                 .setNegativeButton(
                     android.R.string.cancel
@@ -122,13 +159,13 @@ class Create: Fragment() {
                 //get names from endpointDict
                 Log.d("endpointDict", endpointDict.toString())
                 Log.d("connectedEndpoints", connectedEndpoints.toString())
-                val connectedNames = ArrayList<String>()
-                connectedEndpoints.forEach { endpoint ->
-                    connectedNames.add(endpointDict[endpoint]!!)
-                }
+                connectedNames = endpointDict.values.toTypedArray()
+                Log.d("connectedNames", connectedNames.toString())
                 val connectedEndpointsMessage= "connectedendpoints " + connectedNames.joinToString(",")
+                val idsMessage = "endpointsIDS " + connectedEndpoints.joinToString(",")
                 connectedEndpoints.forEach {
                     connectionsClient.sendPayload(it, Payload.fromBytes(connectedEndpointsMessage.toByteArray()))
+                    connectionsClient.sendPayload(it, Payload.fromBytes(idsMessage.toByteArray()))
                 }
                 Log.d("connectedendpoints", connectedEndpointsMessage)
 
@@ -158,17 +195,32 @@ class Create: Fragment() {
             // add to listview that we are connected to this endpoint
             val message = "Disconnected from endpoint: $endpointId"
             mMessageAdapter?.add(message)
+            endpointDict.remove(endpointId)
+            connectedNames = endpointDict.values.toTypedArray()
+            val connectedEndpointsMessage= "connectedendpoints " + connectedNames.joinToString(",")
+            val idsMessage = "endpointsIDS " + connectedEndpoints.joinToString(",")
             // send connected endpoints list to all connected endpoints
             connectedEndpoints.forEach {
-                connectionsClient.sendPayload(it, Payload.fromBytes(connectedEndpoints.toString().toByteArray(UTF_8)))
+                connectionsClient.sendPayload(it, Payload.fromBytes(idsMessage.toByteArray()))
+                connectionsClient.sendPayload(it, Payload.fromBytes(connectedEndpointsMessage.toByteArray()))
             }
+            //get lobby fragment function
+            val lobbyFragment = requireActivity().supportFragmentManager.findFragmentByTag("lobby") as Lobby
+            Log.d("lobbyFragment", lobbyFragment.toString())
+            val endpointname= ""
+            Log.d("endpointname", endpointname)
+            //add message to list
+            val receivedMessage = "Disconnected from endpoint: $endpointId"
+            lobbyFragment.messageReceived(receivedMessage, endpointname)
+
 
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        connectedEndpoints.add(deviceName)
+        endpointDict[deviceName] = deviceName
+        Log.d("endpointDictoncreate", endpointDict.toString())
 
 
 
@@ -257,6 +309,7 @@ class Create: Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        endpointDict[deviceName]=deviceName
         mListView = view.findViewById(R.id.listView)
         //initialize mListView
         mMessageAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1)
@@ -275,7 +328,8 @@ class Create: Fragment() {
                 connectionsClient = Nearby.getConnectionsClient(requireContext())
                 if (advertising==false){
                     connectedEndpoints.clear()
-                    connectedEndpoints.add(deviceName)
+                    endpointDict.clear()
+                    endpointDict[deviceName]=deviceName
                     startAdvertising()
                     advertising=true
                 }
@@ -284,7 +338,8 @@ class Create: Fragment() {
                     connectionsClient.stopAllEndpoints()
                     // clear connected endpoints
                     connectedEndpoints.clear()
-                    connectedEndpoints.add(deviceName)
+                    endpointDict.clear()
+                    endpointDict[deviceName]=deviceName
                     // clear listview
                     mListView?.adapter = null
 
@@ -328,7 +383,9 @@ class Create: Fragment() {
                     connectionsClient.stopAllEndpoints()
                     // clear connected endpoints
                     connectedEndpoints.clear()
-                    connectedEndpoints.add(deviceName)
+                    endpointDict.clear()
+                    endpointDict[deviceName]=deviceName
+
 
                 }else if (!advertising && startAdvertisingButton.findViewById<Button>(R.id.btnAdvertising)?.text=="Start Advertising"){
                     //remove progressDialog
@@ -343,7 +400,9 @@ class Create: Fragment() {
                     connectionsClient.stopAllEndpoints()
                     // clear connected endpoints
                     connectedEndpoints.clear()
-                    connectedEndpoints.add(deviceName)
+                    endpointDict.clear()
+                    endpointDict[deviceName]=deviceName
+
 
                 }else if (advertising && startAdvertisingButton.findViewById<Button>(R.id.btnAdvertising)?.text=="Stop Advertising"){
                     //remove progressDialog
@@ -368,7 +427,10 @@ class Create: Fragment() {
                     connectionsClient.stopAllEndpoints()
                     // clear connected endpoints
                     connectedEndpoints.clear()
-                    connectedEndpoints.add(deviceName)
+                    endpointDict.clear()
+                    endpointDict[deviceName]=deviceName
+
+
 
                 }
             }
@@ -385,18 +447,19 @@ class Create: Fragment() {
             val bundle = Bundle()
 
             bundle.putString("host", deviceName)
+            bundle.putStringArrayList("endpointsIDS", connectedEndpoints)
 
-            bundle.putStringArrayList("connectedEndpoints", connectedEndpoints)
+            bundle.putStringArray("connectedEndpoints", connectedNames)
             //convert connectionsClient so can be passed
             val connectionsClientString = connectionsClient.toString()
             bundle.putString("connectionsClient", connectionsClientString)
             lobbyFragment.arguments = bundle
             val transaction = requireActivity().supportFragmentManager.beginTransaction()
 
-            transaction.add(R.id.frameLayout, lobbyFragment,"Lobby")
+            transaction.add(R.id.frameLayout, lobbyFragment,"lobby")
             //remove advertising fragment
-            transaction.remove(this)
-            transaction.addToBackStack(null)
+            transaction.hide(this)
+            transaction.addToBackStack("lobby")
             transaction.commit()
         }
 

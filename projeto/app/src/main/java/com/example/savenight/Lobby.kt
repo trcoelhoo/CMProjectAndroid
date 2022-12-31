@@ -1,15 +1,22 @@
 package com.example.savenight
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
-import android.os.Parcelable
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.core.app.ActivityCompat
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.ConnectionsClient
 import com.google.android.gms.nearby.connection.Payload
@@ -27,6 +34,7 @@ class Lobby : Fragment() {
     private lateinit var messageList: ArrayList<Message>
     private lateinit var messageAdapter: MessageAdapter
     private var connectedEndpoints = ArrayList<String>()
+    private var endpointsIDS = ArrayList<String>()
     private lateinit var groupName : String
     var receiverRoom: String? = null
     var senderRoom: String? = null
@@ -65,7 +73,24 @@ class Lobby : Fragment() {
 
 
 
-                } else {
+                } else if(receivedMessage.contains("endpointsIDS")){
+                    endpointsIDS.clear()
+                    val endpointsIDSString = receivedMessage.split("endpointsIDS")[1]
+                    val endpointsIDSList = endpointsIDSString.split(",")
+                    endpointsIDSList.forEach {
+                        if(!endpointsIDS.contains(it)){
+                            //remove "[" and "]"
+                            val endpoint = it.replace("[", "")
+                            val endpoint2 = endpoint.replace("]", "")
+                            endpointsIDS.add(endpoint2)
+
+                        }
+                    }
+                    Log.d("endpointsIDS received", endpointsIDS.toString())
+                }
+
+                else {
+                    Log.d("new message", receivedMessage)
                     val message= "$endpointId: $receivedMessage"
                     val newMessage = Message(message, endpointId, false)
                     messageList.add(newMessage)
@@ -85,14 +110,35 @@ class Lobby : Fragment() {
             }
         }
     }
+    @SuppressLint("LongLogTag")
+    fun messageReceived(message: String, endpointId: String){
+        Log.d("messageReceived function", message)
+        val message= "$endpointId: $message"
+        val newMessage = Message(message, endpointId, false)
+        messageList.add(newMessage)
+        messageAdapter.notifyDataSetChanged()
 
+    }
+
+
+    @SuppressLint("LongLogTag")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         messageList = ArrayList()
         messageAdapter = MessageAdapter(requireContext(), messageList)
 
         //get connectedendpoints from bundle
-        connectedEndpoints = arguments?.getStringArrayList("connectedEndpoints") as ArrayList<String>
+        val connectedEndpointsArray = arguments?.getStringArray("connectedEndpoints")
+        Log.d("connectedEndpointsArray", connectedEndpointsArray.toString())
+        connectedEndpointsArray?.forEach {
+            connectedEndpoints.add(it)
+            Log.d("connectedEndpoints", it)
+        }
+        endpointsIDS = arguments?.getStringArrayList("endpointsIDS") as ArrayList<String>
+        Log.d("endpointsIDS", endpointsIDS.toString())
+
+
+
         Log.d("connectedEndpoints ARGUMENT", connectedEndpoints.toString())
 
 
@@ -158,6 +204,49 @@ class Lobby : Fragment() {
             messageAdapter.notifyDataSetChanged()
             messageRecyclerView.scrollToPosition(messageList.size - 1)
             messageBox.setText("")
+
+            adapter.notifyDataSetChanged()
+            //send message to all connected endpoints
+            Log.d("Lobby", "Connected endpoints: $endpointsIDS")
+            //send location to all connected endpoints
+            // get location
+            val fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
+            if (ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return@setOnClickListener
+            }
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location : Location? ->
+                    // Got last known location. In some rare situations this can be null.
+                    if (location != null) {
+                        // Logic to handle location object
+                        val latitude = location.latitude
+                        val longitude = location.longitude
+                        val locationString = "location $latitude,$longitude"
+                        Log.d("location", locationString)
+                        endpointsIDS.forEach {
+                            connectionsClient.sendPayload(it, Payload.fromBytes(locationString.toByteArray()))
+                        }
+                    }
+                }
+
+
+            endpointsIDS.forEach {
+                connectionsClient.sendPayload(it, Payload.fromBytes(message.toByteArray()))
+            }
         }
 
         leaveButton.setOnClickListener {
@@ -171,11 +260,20 @@ class Lobby : Fragment() {
             }
             //disconnect from all endpoints
             connectionsClient.stopAllEndpoints()
+            //clean local storage
+            val sharedPreferences = requireActivity().getSharedPreferences("locations", Context.MODE_PRIVATE)
+            val editor = sharedPreferences.edit()
+            editor.clear().apply()
             val groupsFragment = Groups()
             val transaction = requireActivity().supportFragmentManager.beginTransaction()
+            //remove all fragments from backstack
+            for (i in 0 until requireActivity().supportFragmentManager.backStackEntryCount) {
+                requireActivity().supportFragmentManager.popBackStack()
+            }
             transaction.replace(R.id.frameLayout, groupsFragment)
             transaction.addToBackStack(null)
             transaction.commit()
+
         }
 
 

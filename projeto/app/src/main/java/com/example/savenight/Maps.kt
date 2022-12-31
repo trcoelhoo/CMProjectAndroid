@@ -3,6 +3,7 @@ package com.example.savenight
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Application
+import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
 import androidx.fragment.app.Fragment
@@ -48,6 +49,32 @@ class Maps : Fragment() {
          */
         mMap = googleMap
         val latLng= LatLng(currentLocation.latitude, currentLocation.longitude)
+        // see if we have location members on local storage
+        // if we do, then we set markers for each of them
+        // if we don't, then we don't do anything
+        // get from local storage
+        var sharedPref = requireActivity().getSharedPreferences("locations", Context.MODE_PRIVATE)
+        Log.d("sharedPref", sharedPref.all.toString())
+        if (sharedPref!=null) {
+
+            // percorrer o sharedPref size
+            for (i in 0 until sharedPref.all.size) {
+                // get the location
+                var location = sharedPref.getString("location", String.toString())
+                Log.d("location", location.toString())
+                if (location!=null) {
+                    val name = location.split(":")[0]
+                    val lat = location.split(":")[1].split(";")[0].toDouble()
+                    val long = location.split(":")[1].split(";")[1].toDouble()
+                    val latLng = LatLng(lat, long)
+                    mMap.addMarker(MarkerOptions().position(latLng).title(name))
+
+                }
+            }
+
+
+
+        }
 
         mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng))
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 20f))

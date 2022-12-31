@@ -2,6 +2,7 @@ package com.example.savenight
 
 import android.Manifest
 import android.app.AlertDialog
+import android.content.Context
 import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.os.Build
@@ -59,6 +60,10 @@ class Join_group : Fragment() {
 
     // List of endpoints connected to us
     private val connectedEndpoints = ArrayList<String>()
+    private var connectedNames =Array<String>(0){""}
+
+    private lateinit var messageList: ArrayList<Message>
+    private lateinit var messageAdapter: MessageAdapter
 
 
     private val endpointDiscoveryCallback: EndpointDiscoveryCallback =
@@ -88,25 +93,90 @@ class Join_group : Fragment() {
                 val receivedMessage = String(it, StandardCharsets.UTF_8)
                 Log.d("payload", "Message received: $receivedMessage")
                 //see if received connectedendpoints
-                if(receivedMessage.contains("connectedendpoints")){
+                if(receivedMessage.contains(("endpointsIDS"))){
+                    connectedEndpoints.clear()
+                    //get the list of endpoints
+                    val endpointIDS = receivedMessage.split("endpointsIDS")[1]
+                    //split the list
+                    val endpoinstIDSlist = endpointIDS.split(",")
+                    //add to connected endpoints
+                    endpoinstIDSlist.forEach { connectedEndpoints.add(it) }
+                    connectedEndpoints.add(endpointId)
+                    Log.d("endpointsIDS received join", connectedEndpoints.toString())
+
+
+
+
+
+                }
+
+                else if(receivedMessage.contains("connectedendpoints")){
+
 
 
                     val connectedendpoints = receivedMessage.split("connectedendpoints")[1]
                     val connectedendpointsList = connectedendpoints.split(",")
+                    connectedNames = Array(connectedendpointsList.size){""}
                     //clear list
-                    connectedEndpoints.clear()
-                    connectedendpointsList.forEach {
-                        if(!connectedEndpoints.contains(it)){
-                            val endpoint = it.replace("[", "")
-                            val endpoint2 = endpoint.replace("]", "")
-                            connectedEndpoints.add(endpoint2)
-                        }
+                    connectedNames = Array(connectedendpointsList.size){""}
+                    connectedendpointsList.forEachIndexed { index, s ->
+                        connectedNames[index] = s
                     }
                     Log.d("payload", "connectedendpoints: $connectedendpoints")
-                }
+                    //send to lobby
+                    val lobbyFragment = Lobby()
+
+                    val bundle = Bundle()
+
+                    bundle.putString("host", endpointName)
+                    bundle.putStringArrayList("endpointsIDS", connectedEndpoints)
+
+                    bundle.putStringArray("connectedEndpoints", connectedNames)
+                    //convert connectionsClient so can be passed
+                    val connectionsClientString = connectionsClient.toString()
+                    bundle.putString("connectionsClient", connectionsClientString)
+
+                    Log.d("bundle", bundle.toString())
+                    lobbyFragment.arguments = bundle
+                    val transaction = requireActivity().supportFragmentManager.beginTransaction()
+
+                    transaction.add(R.id.frameLayout, lobbyFragment,"lobby")
+                    //remove advertising fragment
+                    transaction.hide(this@Join_group)
+                    transaction.addToBackStack("lobby")
+                    transaction.commit()
+                }else if (receivedMessage.contains("location")){
+                    Log.d("payload", "location received: $receivedMessage")
+                    //get location
+                    var location = receivedMessage.split("location")[1]
+                    //remove , from location
+                    val locationList = location.split(",")
+                    location=locationList[0]+";"+locationList[1]
+
+                    //save location in local storage
+                    val sharedPref = requireActivity().getSharedPreferences("locations", Context.MODE_PRIVATE)
+                    Log.d("sharedPref", sharedPref.toString())
+                    //get endpoint name
+
+                        val name= connectedNames[connectedEndpoints.indexOf(endpointId)]
+                    val store= name+ " : " + location
+                    with(sharedPref.edit()) {
+                        putString("location", store)
+                        commit()
+                    }
+                    Log.d("sharedPref", sharedPref.toString())
+
+
+                    }
                 else{
-                    //toast message
-                    Toast.makeText(context, receivedMessage, Toast.LENGTH_SHORT).show()
+                    //get lobby fragment function
+                    val lobbyFragment = requireActivity().supportFragmentManager.findFragmentByTag("lobby") as Lobby
+                    Log.d("lobbyFragment", lobbyFragment.toString())
+                    val endpointname= connectedNames[connectedEndpoints.indexOf(endpointId)]
+                    Log.d("endpointname", endpointname)
+                    //add message to list
+                    lobbyFragment.messageReceived(receivedMessage, endpointname)
+
 
                 }
 
@@ -159,27 +229,7 @@ class Join_group : Fragment() {
                             "Connected to " + endpointId,
                             Toast.LENGTH_LONG
                         ).show()
-                        //send to lobby
-                        val lobbyFragment = Lobby()
 
-                        val bundle = Bundle()
-
-                        bundle.putString("host", endpointName)
-
-                        bundle.putStringArrayList("connectedEndpoints", connectedEndpoints)
-                        //convert connectionsClient so can be passed
-                        val connectionsClientString = connectionsClient.toString()
-                        bundle.putString("connectionsClient", connectionsClientString)
-
-                        Log.d("bundle", bundle.toString())
-                        lobbyFragment.arguments = bundle
-                        val transaction = requireActivity().supportFragmentManager.beginTransaction()
-
-                        transaction.add(R.id.frameLayout, lobbyFragment,"Lobby")
-                        //remove advertising fragment
-                        transaction.hide(this@Join_group)
-                        transaction.addToBackStack(null)
-                        transaction.commit()
                     }
                     ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED -> {
                         // The connection was rejected by one or both sides.
@@ -204,11 +254,14 @@ class Join_group : Fragment() {
             override fun onDisconnected(endpointId: String) {
                 // We've been disconnected from this endpoint. No more data can be
                 // sent or received.
-                Toast.makeText(
-                    context,
-                    "Disconnected from $endpointName",
-                    Toast.LENGTH_LONG
-                ).show()
+                if (context != null) {
+                    Toast.makeText(
+                        context,
+                        "Disconnected from " + endpointName,
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+
 
             }
         }
@@ -271,6 +324,12 @@ class Join_group : Fragment() {
 
         discoversList = ArrayList()
         discoversAdapter = HostAdapter(requireContext(), discoversList)
+        //get message list and adapter from lobby fragment
+        messageList = ArrayList()
+        messageAdapter = MessageAdapter(requireContext(), messageList)
+
+
+
 
 
 
@@ -331,7 +390,7 @@ class Join_group : Fragment() {
                 val endpointId = discoversList[position].endpointId
                 if (endpointId != null) {
                     connectionsClient.requestConnection(
-                        "Host",
+                        deviceName,
                         endpointId,
                         connectionLifecycleCallback
                     )
