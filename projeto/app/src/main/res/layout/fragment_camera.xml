@@ -15,17 +15,18 @@
         android:layout_width="match_parent">
 
 
-
-        <com.google.android.material.appbar.CollapsingToolbarLayout
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:toolbarId="@+id/toolbar"
-            app:layout_scrollFlags="scroll|exitUntilCollapsed"
 
-            app:contentScrim="?attr/colorPrimary">
+            app:layout_anchor="@+id/appbar"
+            app:layout_anchorGravity="center"
+            app:title="Pictures to Share"
+
+            app:titleTextColor="#FFFFFF"></androidx.appcompat.widget.Toolbar>
 
 
-        </com.google.android.material.appbar.CollapsingToolbarLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
 
@@ -33,11 +34,35 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#C3C3C3"
-        tools:context=".Groups">
+        tools:context=".Camera">
+
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="726dp">
+
+
+            <Button
+                android:id="@+id/button_upload_picture"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="660dp"
+                android:text="@string/upload_picture"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.498"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <Button
+                android:id="@+id/button_select_picture"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="600dp"
+                android:text="@string/select_picture"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.843"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <ImageView
                 android:id="@+id/imageview_picture"
@@ -54,15 +79,12 @@
                 android:id="@+id/button_take_picture"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="596dp"
+                android:layout_marginTop="600dp"
                 android:text="@string/take_picture"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.498"
+                app:layout_constraintHorizontal_bias="0.163"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
-
-
-
 
 
         </androidx.constraintlayout.widget.ConstraintLayout>
@@ -72,3 +94,5 @@
 
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+

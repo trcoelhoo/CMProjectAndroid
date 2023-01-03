@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import androidx.fragment.app.Fragment
@@ -15,18 +14,24 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.Toast
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
-import androidx.core.content.ContextCompat.checkSelfPermission
+import androidx.core.content.ContextCompat
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.ktx.storage
 
 
-/**
- * A simple [Fragment] subclass as the default destination in the navigation.
- */
 class Camera : Fragment() {
-    private val CAMERA_PERMISSION_CODE = 1000
     private val IMAGE_CAPTURE_CODE = 1001
     private var imageUri: Uri? = null
-    private var imageView: ImageView? = null
+    private lateinit var imageView: ImageView
+    private var storageReference = Firebase.storage
+    private lateinit var uri: Uri
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -37,44 +42,27 @@ class Camera : Fragment() {
 
     }
 
-    private fun requestCameraPermission(): Boolean {
-        var permissionGranted = false
 
-        // If system os is Marshmallow or Above, we need to request runtime permission
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-            val cameraPermissionNotGranted = checkSelfPermission(activity as Context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED
-            if (cameraPermissionNotGranted){
-                val permission = arrayOf(Manifest.permission.CAMERA)
-
-                // Display permission dialog
-                requestPermissions(permission, CAMERA_PERMISSION_CODE)
-            }
-            else{
-                // Permission already granted
-                permissionGranted = true
-            }
-        }
-        else{
-            // Android version earlier than M -> no need to request permission
-            permissionGranted = true
-        }
-
-        return permissionGranted
-    }
-
-    // Handle Allow or Deny response from the permission dialog
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        if (requestCode === CAMERA_PERMISSION_CODE) {
-            if (grantResults.size === 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                // Permission was granted
+    private fun requestPermission(){
+        requestCameraPermissionIfMissin { granted ->
+            if(granted)
                 openCameraInterface()
-            }
-            else{
-                // Permission was denied
-                showAlert("Camera permission was denied. Unable to take a picture.");
-            }
+            else
+                Toast.makeText(context, "Please Allow the Permission", Toast.LENGTH_LONG).show()
         }
     }
+
+    private fun requestCameraPermissionIfMissin(onResult: ((Boolean) -> Unit)) {
+        if(context?.let { ContextCompat.checkSelfPermission(it, Manifest.permission.CAMERA) } == PackageManager.PERMISSION_GRANTED)
+            onResult(true)
+        else
+            registerForActivityResult(ActivityResultContracts.RequestPermission()){
+                onResult(it)
+            }.launch(Manifest.permission.CAMERA)
+
+    }
+
+
 
     private fun openCameraInterface() {
         val values = ContentValues()
@@ -89,7 +77,6 @@ class Camera : Fragment() {
         // Launch intent
         startActivityForResult(intent, IMAGE_CAPTURE_CODE)
     }
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -104,6 +91,8 @@ class Camera : Fragment() {
         }
     }
 
+
+
     private fun showAlert(message: String) {
         val builder = AlertDialog.Builder(activity as Context)
         builder.setMessage(message)
@@ -117,14 +106,52 @@ class Camera : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         imageView = view.findViewById(R.id.imageview_picture)
+        storageReference = FirebaseStorage.getInstance()
+
+        val galleryImage = registerForActivityResult(
+            ActivityResultContracts.GetContent(),
+            ActivityResultCallback {
+                imageView.setImageURI(it)
+                if (it != null) {
+                    uri = it
+                }
+            }
+
+        )
 
         view.findViewById<Button>(R.id.button_take_picture).setOnClickListener {
-            // Request permission
-            val permissionGranted = requestCameraPermission()
-            if (permissionGranted) {
-                // Open the camera interface
-                openCameraInterface()
-            }
+            requestPermission()
+        }
+
+        view.findViewById<Button>(R.id.button_select_picture).setOnClickListener {
+            galleryImage.launch("image/*")
+
+        }
+
+        view.findViewById<Button>(R.id.button_upload_picture).setOnClickListener {
+            storageReference.getReference("images").child(System.currentTimeMillis().toString())
+                .putFile(uri)
+                .addOnSuccessListener { task ->
+                    task.metadata!!.reference!!.downloadUrl
+                        .addOnSuccessListener { uri ->
+                            val uid = FirebaseAuth.getInstance().currentUser!!.uid
+                            val imageMap = mapOf(
+                                "url" to uri.toString()
+                            )
+                            val databaseReference =
+                                FirebaseDatabase.getInstance().getReference("userImages")
+                            databaseReference.child(uid).setValue(imageMap)
+                                .addOnSuccessListener{
+                                    Toast.makeText(context, "Successful Shared", Toast.LENGTH_SHORT).show()
+                                }
+                                .addOnFailureListener{
+                                    Toast.makeText(context, it.toString(), Toast.LENGTH_SHORT).show()
+                                }
+                        }
+                }
+
         }
     }
+
+
 }

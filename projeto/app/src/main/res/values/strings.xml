@@ -28,5 +28,10 @@
 
     <string name="take_picture">Take Picture</string>
     <string name="take_picture_description">Camera picture for sample app</string>
+    <string name="select_picture">Select Picture</string>
+    <string name="upload_picture">Share</string>
     <string name="ok_button_title">OK</string>
+
+    <string name="logout">Logout</string>
+
 </resources>
