@@ -1,16 +1,18 @@
 package com.example.savenight
 
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import android.content.Context
+
 
 class ImageAdapter(
     private val imagesList:ArrayList<UserImage>,
-    private val context:Context
+    private val context: Context
+
 ):
     RecyclerView.Adapter<ImageAdapter.ImageViewHolder>(){
 
@@ -20,7 +22,8 @@ class ImageAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ImageViewHolder {
-        val itemView = LayoutInflater.from(parent.context).inflate(R.layout.list_item, parent, false)
+        val itemView =
+            LayoutInflater.from(parent.context).inflate(R.layout.list_item, parent, false)
         return ImageViewHolder(itemView)
     }
 
