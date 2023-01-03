@@ -10,6 +10,7 @@ import android.widget.Toast
 import android.widget.Toast.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 
 
@@ -41,8 +42,11 @@ class Feed : Fragment() {
         val adapter = ImageAdapter(imagesList, requireContext())
         recyclerView.adapter = adapter
 
+        val uid = FirebaseAuth.getInstance().currentUser!!.uid
 
-        databaseReference = FirebaseDatabase.getInstance().getReference("images")
+        databaseReference = FirebaseDatabase.getInstance().
+        getReference(uid)
+
         databaseReference.addValueEventListener(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
                 if(snapshot.exists()){
