@@ -25,7 +25,7 @@ class ImageAdapter(
     }
 
     override fun onBindViewHolder(holder: ImageViewHolder, position: Int) {
-        //Glide.with(context).load(imagesList[position].url).into(holder.image)
+        Glide.with(context).load(imagesList[position].imageUrl).into(holder.image)
     }
 
     override fun getItemCount(): Int {

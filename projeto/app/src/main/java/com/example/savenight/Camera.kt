@@ -29,7 +29,6 @@ import com.google.firebase.storage.ktx.storage
 
 class Camera : Fragment() {
     private val IMAGE_CAPTURE_CODE = 1001
-    private var imageUri: Uri? = null
     private lateinit var imageView: ImageView
     private var storageReference = Firebase.storage
     private lateinit var uri: Uri
@@ -69,11 +68,11 @@ class Camera : Fragment() {
         val values = ContentValues()
         values.put(MediaStore.Images.Media.TITLE, R.string.take_picture)
         values.put(MediaStore.Images.Media.DESCRIPTION, R.string.take_picture_description)
-        imageUri = activity?.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+        uri = activity?.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)!!
 
         // Create camera intent
         val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri)
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, uri)
 
         // Launch intent
         startActivityForResult(intent, IMAGE_CAPTURE_CODE)
@@ -84,7 +83,7 @@ class Camera : Fragment() {
         // Callback from camera intent
         if (resultCode == Activity.RESULT_OK){
             // Set image captured to image view
-            imageView?.setImageURI(imageUri)
+            imageView?.setImageURI(uri)
         }
         else {
             // Failed to take picture
