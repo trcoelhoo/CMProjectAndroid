@@ -185,11 +185,7 @@ class Join_group : Fragment() {
 
         override fun onPayloadTransferUpdate(endpointId: String, update: PayloadTransferUpdate) {
             if (update.status == PayloadTransferUpdate.Status.SUCCESS) {
-                Toast.makeText(
-                    context,
-                    "Payload transfer complete",
-                    Toast.LENGTH_LONG
-                ).show()
+
             }
         }
     }

@@ -64,6 +64,16 @@ class DrunkTest : Fragment(), SensorEventListener {
 
         startButton.setOnClickListener {
             if(startButton.text == "Start Test"){
+                //reset timer
+                startTime = 0
+                endTime = 0
+                timeTaken = 0
+                //reset timer
+                startTimeCenter = 0
+                endTimeCenter = 0
+                timeTakenCenter = 0
+                inCenter = false
+
                 startTime= System.currentTimeMillis()
                 startButton.text = "Stop Test"
                 greencircle.visibility = View.INVISIBLE

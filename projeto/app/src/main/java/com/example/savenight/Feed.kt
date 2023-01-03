@@ -32,9 +32,15 @@ class Feed : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+
         recyclerView = view.findViewById(R.id.imageRecycler)
         recyclerView.layoutManager = LinearLayoutManager(context)
+
         imagesList = arrayListOf()
+        //create adapter
+        val adapter = ImageAdapter(imagesList, requireContext())
+        recyclerView.adapter = adapter
+
 
         databaseReference = FirebaseDatabase.getInstance().getReference("userImages")
         databaseReference.addValueEventListener(object : ValueEventListener{
