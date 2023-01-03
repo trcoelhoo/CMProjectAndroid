@@ -136,7 +136,7 @@ class Camera : Fragment() {
                         .addOnSuccessListener { uri ->
                             val uid = FirebaseAuth.getInstance().currentUser!!.uid
                             val imageMap = mapOf(
-                                "url" to uri.toString()
+                                "imageUrl" to uri.toString()
                             )
                             val databaseReference =
                                 FirebaseDatabase.getInstance().
@@ -155,24 +155,7 @@ class Camera : Fragment() {
 
 
 
-        view.findViewById<Button>(R.id.button_upload_picture).setOnClickListener {
-            storageReference.getReference("images").child(System.currentTimeMillis().toString())
-                .putFile(uri)
-                .addOnSuccessListener { task ->
-                    task.metadata!!.reference!!.downloadUrl
-                        .addOnSuccessListener { uri ->
 
-                            val databaseReference:DatabaseReference =
-                                FirebaseDatabase.getInstance().getReferenceFromUrl("https://savenight-f8bc3-default-rtdb.firebaseio.com")
-                                    .child("images")
-                            val hashMap: HashMap<String, String> = HashMap()
-                            hashMap.put("imageUrl", uri.toString())
-                            databaseReference.setValue(hashMap)
-                            Toast.makeText(context,"Successful Shared", Toast.LENGTH_SHORT).show()
-                        }
-                }
-
-        }
     }
 
 
