@@ -20,6 +20,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
@@ -139,7 +140,8 @@ class Camera : Fragment() {
                                 "url" to uri.toString()
                             )
                             val databaseReference =
-                                FirebaseDatabase.getInstance().getReference("userImages")
+                                FirebaseDatabase.getInstance().
+                                getReferenceFromUrl("https://savenight-f8bc3-default-rtdb.firebaseio.com")
                             databaseReference.child(uid).setValue(imageMap)
                                 .addOnSuccessListener{
                                     Toast.makeText(context, "Successful Shared", Toast.LENGTH_SHORT).show()
@@ -147,6 +149,27 @@ class Camera : Fragment() {
                                 .addOnFailureListener{
                                     Toast.makeText(context, it.toString(), Toast.LENGTH_SHORT).show()
                                 }
+                        }
+                }
+
+        }
+
+
+
+        view.findViewById<Button>(R.id.button_upload_picture).setOnClickListener {
+            storageReference.getReference("images").child(System.currentTimeMillis().toString())
+                .putFile(uri)
+                .addOnSuccessListener { task ->
+                    task.metadata!!.reference!!.downloadUrl
+                        .addOnSuccessListener { uri ->
+
+                            val databaseReference:DatabaseReference =
+                                FirebaseDatabase.getInstance().getReferenceFromUrl("https://savenight-f8bc3-default-rtdb.firebaseio.com")
+                                    .child("images")
+                            val hashMap: HashMap<String, String> = HashMap()
+                            hashMap.put("imageUrl", uri.toString())
+                            databaseReference.setValue(hashMap)
+                            Toast.makeText(context,"Successful Shared", Toast.LENGTH_SHORT).show()
                         }
                 }
 

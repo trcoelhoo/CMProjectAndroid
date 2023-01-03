@@ -46,7 +46,7 @@
                 android:id="@+id/button_upload_picture"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="660dp"
+                android:layout_marginTop="576dp"
                 android:text="@string/upload_picture"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.498"
@@ -57,32 +57,32 @@
                 android:id="@+id/button_select_picture"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="600dp"
+                android:layout_marginTop="516dp"
                 android:text="@string/select_picture"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.843"
+                app:layout_constraintHorizontal_bias="0.852"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <ImageView
                 android:id="@+id/imageview_picture"
-                android:layout_width="413dp"
-                android:layout_height="477dp"
+                android:layout_width="383dp"
+                android:layout_height="413dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintHorizontal_bias="0.571"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintVertical_bias="0.361" />
+                app:layout_constraintVertical_bias="0.258" />
 
             <Button
                 android:id="@+id/button_take_picture"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="600dp"
+                android:layout_marginTop="516dp"
                 android:text="@string/take_picture"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.163"
+                app:layout_constraintHorizontal_bias="0.171"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
