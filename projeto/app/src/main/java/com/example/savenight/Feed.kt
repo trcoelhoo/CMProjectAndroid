@@ -1,6 +1,7 @@
 package com.example.savenight
 
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -33,7 +34,7 @@ class Feed : Fragment() {
 
 
         recyclerView = view.findViewById(R.id.imageRecycler)
-        recyclerView.layoutManager = LinearLayoutManager(context)
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
         imagesList = arrayListOf()
         //create adapter
@@ -45,11 +46,14 @@ class Feed : Fragment() {
         databaseReference.addValueEventListener(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
                 if(snapshot.exists()){
-                    for(dataSnapShot in snapshot.children){
-                        val image = dataSnapShot.getValue(UserImage::class.java)
+                    for(imageSnapshot in snapshot.children){
+
+                        val image = UserImage(imageSnapshot.value.toString())
                         imagesList.add(image!!)
                     }
-                    recyclerView.adapter = ImageAdapter(imagesList,this@Feed)
+                    adapter.notifyDataSetChanged()
+
+
                 }
             }
 

@@ -1,6 +1,15 @@
 package com.example.savenight
 
-data class UserImage (
-    val imageUrl : String?=null
+class UserImage {
+    var imageUrl : String? = null
 
-)
+
+    constructor(imageUrl: String??) {
+        this.imageUrl = imageUrl
+
+
+    }
+
+    constructor(){}
+
+}
