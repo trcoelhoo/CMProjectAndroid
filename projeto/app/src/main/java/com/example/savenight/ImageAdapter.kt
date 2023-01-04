@@ -28,7 +28,11 @@ class ImageAdapter(
     }
 
     override fun onBindViewHolder(holder: ImageViewHolder, position: Int) {
-        Glide.with(context).load(imagesList[position].imageUrl).into(holder.image)
+        Glide.with(context)
+            .load(imagesList[position].imageUrl)
+            .fitCenter() // resize and scale the image to fit the dimensions of the target ImageView
+            .into(holder.image)
+
     }
 
     override fun getItemCount(): Int {

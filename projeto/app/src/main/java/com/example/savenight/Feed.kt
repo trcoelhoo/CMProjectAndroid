@@ -1,11 +1,13 @@
 package com.example.savenight
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.Toast
 import android.widget.Toast.*
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -32,6 +34,17 @@ class Feed : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+
+        view.findViewById<Button>(R.id.logout).setOnClickListener {
+            FirebaseAuth.getInstance().signOut()
+            // navigate to the login activity
+            val intent = Intent(activity, SignInActivity::class.java)
+            startActivity(intent)
+
+            // show a message to the user
+            Toast.makeText(activity, "You have been logged out", Toast.LENGTH_SHORT).show()
+        }
 
 
         recyclerView = view.findViewById(R.id.imageRecycler)
