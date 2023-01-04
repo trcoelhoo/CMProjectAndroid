@@ -23,6 +23,7 @@ import java.util.stream.IntStream.builder
 
 class DrunkTest : Fragment(), SensorEventListener {
 
+
     private lateinit var sensorManager: SensorManager
     private lateinit var beer: ImageView
     private lateinit var greencircle: ImageView

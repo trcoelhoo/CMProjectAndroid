@@ -27,6 +27,7 @@ import com.google.android.gms.maps.model.MarkerOptions
 
 class Maps : Fragment() {
 
+
     private lateinit var mMap: GoogleMap
     private lateinit var binding: ActivityMainBinding
 
@@ -129,11 +130,7 @@ class Maps : Fragment() {
             if (location != null) {
 
                 currentLocation = location
-                Toast.makeText(
-                    requireContext(),
-                    "${currentLocation.latitude} ${currentLocation.longitude}",
-                    Toast.LENGTH_SHORT
-                ).show()
+
                 val supportMapFragment =
                     childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
                 supportMapFragment.getMapAsync(callback)

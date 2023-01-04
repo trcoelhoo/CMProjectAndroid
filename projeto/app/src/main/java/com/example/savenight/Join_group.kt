@@ -1,6 +1,7 @@
 package com.example.savenight
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
@@ -88,6 +89,7 @@ class Join_group : Fragment() {
         }
     /** callback for receiving payloads */
     private val payloadCallback: PayloadCallback = object : PayloadCallback() {
+        @SuppressLint("LongLogTag")
         override fun onPayloadReceived(endpointId: String, payload: Payload) {
             payload.asBytes()?.let {
                 val receivedMessage = String(it, StandardCharsets.UTF_8)
@@ -383,6 +385,8 @@ class Join_group : Fragment() {
             override fun onItemClick(position: Int) {
                 Log.d("TAG", "onItemClick: clicked.")
                 Log.d("item", discoversList[position].toString())
+                //Toast joining
+                Toast.makeText(context, "Joining " , Toast.LENGTH_SHORT).show()
                 val endpointId = discoversList[position].endpointId
                 if (endpointId != null) {
                     connectionsClient.requestConnection(

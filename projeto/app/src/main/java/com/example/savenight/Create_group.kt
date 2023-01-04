@@ -83,11 +83,7 @@ class Create: Fragment() {
 
 
             } else {
-                    Toast.makeText(
-                        context,
-                        "Received message: $receivedMessage",
-                        Toast.LENGTH_LONG
-                    ).show()
+
                     //get lobby fragment function
                     val lobbyFragment =
                         requireActivity().supportFragmentManager.findFragmentByTag("lobby") as Lobby
@@ -103,11 +99,7 @@ class Create: Fragment() {
 
         override fun onPayloadTransferUpdate(endpointId: String, update: PayloadTransferUpdate) {
             if (update.status == PayloadTransferUpdate.Status.SUCCESS) {
-                Toast.makeText(
-                    context,
-                    "Payload transfer complete",
-                    Toast.LENGTH_LONG
-                ).show()
+
             }
         }
     }
